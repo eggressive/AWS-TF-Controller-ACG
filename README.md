@@ -1,5 +1,5 @@
 # AWS-TF-Controller-ACG
-## Bootstrap terraform controller in ACG lab
+### Bootstrap terraform controller in ACG lab
 ## TODO:
 1. Manage instance via SSM
 2. Work on SSM agent status check
