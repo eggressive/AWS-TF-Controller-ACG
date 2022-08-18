@@ -7,14 +7,15 @@ export AWS_PROFILE=acglab
 
 # Variables
 awscmd="aws ec2"
-keyname="TFControl2"
+keyname="TFControl5"
 keyfile="tfcontrol.pem"
-sg_name="tfcontrol-sg2"
+sg_name="tfcontrol-sg5"
 av_zone="us-east-1a"
 amz_image="/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
 inst_count="1"
 inst_type="t2.medium"
 osuser="ec2-user"
+iamprofile="SSMInstanceProfile"
 
 # Determine vpc-id
 echo Connection established...
@@ -41,9 +42,13 @@ echo -e SSH ingress open from $source_ip...
 subnetid=$($awscmd describe-subnets --filters "Name=availability-zone,Values=$av_zone" --query "Subnets[*].[SubnetId]")
 
 # Spin instance(s) based on latest Amazon Linux 2 AMI image
-inst_id=$($awscmd run-instances --image-id $(aws ssm get-parameters --names $amz_image --query 'Parameters[0].[Value]' --output text) --count $inst_count --instance-type $inst_type --subnet-id $subnetid --security-group-ids $sgroupid --key-name $keyname --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=TF Controller}]' --query 'Instances[*].[InstanceId]')
+inst_id=$($awscmd run-instances --image-id $(aws ssm get-parameters --names $amz_image --query 'Parameters[0].[Value]' --output text) --iam-instance-profile Name=$iamprofile --count $inst_count --instance-type $inst_type --subnet-id $subnetid --security-group-ids $sgroupid --key-name $keyname --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=TF Controller}]' --query 'Instances[*].[InstanceId]')
 instance=($(aws ec2 describe-instances --query 'Reservations[*].Instances[*].[PublicDnsName,PublicIpAddress]' --filters "Name=instance-id,Values=$inst_id" --output=text))
 echo -e Creating instance... 
 echo -e ' \t' ID: ' \t\t' $inst_id 
 echo -e ' \t' DNS: ' \t\t' ${instance[0]}
 echo -e ' \t' External IP: ' \t' ${instance[1]}
+
+# aws ec2 run-instances --image-id $(aws ssm get-parameters --names /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 --query 'Parameters[0].[Value]' --output text) --iam-instance-profile Name=SSMInstanceProfile --count 1 --instance-type t2.medium --subnet-id subnet-0d1356b3414115462 --security-group-ids sg-0a8af138c35cb3bc6 --key-name TFControl --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Test1}]'
+## --query 'Instances[*].[InstanceId]' --output=text
+## aws ssm list-documents --query 'DocumentIdentifiers[*].[Name]'
