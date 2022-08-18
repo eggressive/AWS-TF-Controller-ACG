@@ -5,6 +5,7 @@
 2. Work on SSM agent status check
 
 aws configure --profile acglab
+
 export AWS_PROFILE=acglab
 # profile checks
 aws configure list
