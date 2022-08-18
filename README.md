@@ -3,7 +3,7 @@
 ## TODO:
 1. Manage instance via SSM
 2. Work on SSM agent status check 
-<br />
+
 ### Environment
 aws configure --profile acglab  
 export AWS_PROFILE=acglab
