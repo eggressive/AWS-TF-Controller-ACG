@@ -7,9 +7,14 @@ export AWS_PROFILE=acglab
 
 # Variables
 awscmd="aws ec2"
-keyname="TFControl"
+keyname="TFControl2"
 keyfile="tfcontrol.pem"
-sg_name="tfcontrol-sg"
+sg_name="tfcontrol-sg2"
+av_zone="us-east-1a"
+amz_image="/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
+inst_count="1"
+inst_type="t2.medium"
+osuser="ec2-user"
 
 # Determine vpc-id
 echo Connection established...
@@ -17,10 +22,10 @@ vpcid=$($awscmd describe-vpcs --query 'Vpcs[*].[VpcId]')
 echo -e Getting VPC ID... ' \t\t\t' $vpcid
 
 # Create keypair
-#$awscmd create-key-pair --key-name $keyname --query 'KeyMaterial' > $keyfile
-#chmod 400 tfcontrol.pem
-#keyout=($($awscmd describe-key-pairs --key-name $keyname --query 'KeyPairs[*].[KeyName,KeyFingerprint]'))
-echo -e Creating EC2 instance keypair... ' \t' ${keyout[1]} ${keyout[0]}
+$awscmd create-key-pair --key-name $keyname --query 'KeyMaterial' > $keyfile
+chmod 400 tfcontrol.pem
+keyout=($($awscmd describe-key-pairs --key-name $keyname --query 'KeyPairs[*].[KeyName,KeyFingerprint]'))
+echo -e "Creating EC2 instance keypair...  \t ${keyout[1]} (${keyout[0]})"
 
 # Security group
 source_ip=$(curl -s https://checkip.amazonaws.com)
@@ -31,15 +36,14 @@ echo -e Creating security group... ' \t\t' $sgroupid
 # Open ingress ssh from source
 $awscmd authorize-security-group-ingress --group-id $sgroupid --protocol tcp --port 22 --cidr $source_ip/32 2>&1 > /dev/null
 echo -e SSH ingress open from $source_ip... 
-##aws ec2 describe-security-groups --query 'SecurityGroups[*].[GroupName,Description,GroupId]'
-## --query 'Users[*].[UserName,Arn,CreateDate,PasswordLastUsed,UserId]'
 
-## AMI image
-#aws ec2 describe-images --region us-east-1 
-#aws ec2 describe-images --region us-east-1 --filters Name=architecture,Values=x86_64
-#aws ec2 describe-images --owners amazon --filters "Name=name,Values=amzn*" --query 'sort_by(Images, &CreationDate)[].Name'
-## Subnets
-#aws ec2 describe-subnets --query "Subnets[*].SubnetId"
+## Get subnet in us-east-1q availability zone
+subnetid=$($awscmd describe-subnets --filters "Name=availability-zone,Values=$av_zone" --query "Subnets[*].[SubnetId]")
 
-### Always run latest Amz image
-#aws ec2 run-instances --image-id $(aws ssm get-parameters --names /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 --query 'Parameters[0].[Value]' --output text) --count 1 --instance-type t2.medium --subnet-id subnet-0ac0f7f495eb1c852 --security-group-ids sg-0c94c94b747919ed0 --key-name TFControl1 --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=TFControl2}]'
+# Spin instance(s) based on latest Amazon Linux 2 AMI image
+inst_id=$($awscmd run-instances --image-id $(aws ssm get-parameters --names $amz_image --query 'Parameters[0].[Value]' --output text) --count $inst_count --instance-type $inst_type --subnet-id $subnetid --security-group-ids $sgroupid --key-name $keyname --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=TF Controller}]' --query 'Instances[*].[InstanceId]')
+instance=($(aws ec2 describe-instances --query 'Reservations[*].Instances[*].[PublicDnsName,PublicIpAddress]' --filters "Name=instance-id,Values=$inst_id" --output=text))
+echo -e Creating instance... 
+echo -e ' \t' ID: ' \t\t' $inst_id 
+echo -e ' \t' DNS: ' \t\t' ${instance[0]}
+echo -e ' \t' External IP: ' \t' ${instance[1]}

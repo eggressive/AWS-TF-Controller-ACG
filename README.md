@@ -1,3 +1,3 @@
-# AWS-TF-Controller---ACG
+# AWS-TF-Controller-ACG
 
 ## Creates terraform controller in ACG lab
