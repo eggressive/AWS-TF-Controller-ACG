@@ -1,29 +1,29 @@
-# AWS-TF-Controller-ACG
-## Creates terraform controller in ACG lab
-# TODO:
-## 1. Manage instance via SSM
-## 2. Work on SSM agent status check
+#### AWS-TF-Controller-ACG
+## Bootstrap terraform controller in ACG lab
+## TODO:
+1. Manage instance via SSM
+2. Work on SSM agent status check 
 
-#run ex. 'aws s3 ls --profile acglab'
-aws configure --profile acglab
+### Environment
+aws configure --profile acglab  
 export AWS_PROFILE=acglab
-# profile checks
-aws configure list
-aws ec2 describe-instances --profile acglab
-aws iam get-account-summary --profile acglab
-aws iam get-login-profile --user-name cloud_user --profile acglab
-#Create EC2
-## keypair
-aws ec2 create-key-pair --key-name TFControl --query 'KeyMaterial' --output text > tfcontrol.pem
-chmod 400 tfcontrol.pem
-aws ec2 describe-key-pairs --key-name TFControl1
+### profile checks
+aws configure list  
+aws ec2 describe-instances --profile acglab  
+aws iam get-account-summary --profile acglab  
+aws iam get-login-profile --user-name cloud_user --profile acglab  
+## Create EC2 instance
+### keypair
+aws ec2 create-key-pair --key-name TFControl --query 'KeyMaterial' --output text > tfcontrol.pem  
+chmod 400 tfcontrol.pem  
+aws ec2 describe-key-pairs --key-name TFControl1  
 ## Security group
 ### Determine vpc-id
-aws ec2 describe-vpcs --query 'Vpcs[*].VpcId' --output text
-aws ec2 create-security-group --group-name tfcontrol-sg --description "TFControl security group" --vpc-id vpc-05b16755dbb9d03f3
-aws ec2 describe-security-groups --group-ids sg-0c94c94b747919ed0
-aws ec2 authorize-security-group-ingress --group-id sg-0c94c94b747919ed0 --protocol tcp --port 22 --cidr 0.0.0.0/0 
-### or --cidr 147.161.173.113/32 for own IP address
+aws ec2 describe-vpcs --query 'Vpcs[*].VpcId' --output text  
+aws ec2 create-security-group --group-name tfcontrol-sg --description "TFControl security group" --vpc-id vpc-05b16755dbb9d03f3  
+aws ec2 describe-security-groups --group-ids sg-0c94c94b747919ed0  
+aws ec2 authorize-security-group-ingress --group-id sg-0c94c94b747919ed0 --protocol tcp --port 22 --cidr 0.0.0.0/0   
+or --cidr 147.161.173.113/32 for own IP address
 
 ## AMI image
 aws ec2 describe-images --region us-east-1 
